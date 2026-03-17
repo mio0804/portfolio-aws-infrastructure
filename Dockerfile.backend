@@ -1,0 +1,36 @@
+# 本番環境用バックエンドDockerfile
+FROM python:3.11-slim
+
+# 作業ディレクトリの設定
+WORKDIR /app
+
+# システムパッケージの更新と必要なパッケージのインストール
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Pythonの依存関係ファイルをコピー
+COPY requirements.txt .
+
+# 依存関係のインストール
+RUN pip install --no-cache-dir -r requirements.txt
+
+# アプリケーションコードをコピー
+COPY backend/ .
+
+# 非rootユーザーの作成（セキュリティのため）
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+# ポート5000を公開
+EXPOSE 5000
+
+# ヘルスチェック用エンドポイント
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/api/health || exit 1
+
+# Gunicornでアプリケーションを起動
+# ワーカー数は環境変数で調整可能（デフォルト: 4）
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "600", "--graceful-timeout", "120", "--preload", "--access-logfile", "-", "--error-logfile", "-", "app:app"]

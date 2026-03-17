@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      context: .                            # ビルドに使うカレントディレクトリを指定
+      dockerfile: .devcontainer/Dockerfile  # ルートディレクトリに Dockerfile を置いてない場合は指定してあげないと読み込めない
+    volumes:
+      - .:/workspace  # ルートディレクトリを /workspace がマウント * 双方の修正が反映されるように
+    ports:
+      - "5000:5000"
+      - "3000:3000"  # React 開発サーバー
+    depends_on:
+      - db      # db が先に起動して、次に web が起動される
+    command: sleep infinity  # devcontainer用に永続化
+
+  db:
+    image: postgres:15  # postgres:latest は最新版を使用できるが、ビルドする度にバージョンが変わる可能性があり環境差異が出るので、固定がベスト
+    ports:
+      - "5432:5432"
+    environment:  # 環境変数 (エンバイロメント)
+      POSTGRES_DB: animalog           # 新規データベースを作成
+      POSTGRES_USER: animalog       # 新規ユーザーを作成
+      POSTGRES_PASSWORD: animalog   # ユーザーのパスワードを設定
+    volumes:
+      - pg_data:/var/lib/postgresql/data  # pg_data を /var/lib/postgresql/data がマウント
+
+volumes:
+  pg_data:

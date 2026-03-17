@@ -1,0 +1,37 @@
+{
+  "name": "AnimaLog-dev",
+  "dockerComposeFile": ["../docker-compose.yml"],  
+  "service": "web",
+  "workspaceFolder": "/workspace",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [5000, 3000, 5432],
+  "remoteEnv": {
+    "SHELL": "/bin/bash"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "MS-CEINTL.vscode-language-pack-ja"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "[python]": {
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+          }
+        },
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "postCreateCommand": "docker compose up -d",
+  "remoteUser": "vscode"
+}
