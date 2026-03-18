@@ -1,5 +1,5 @@
-# Python 3.11の公式イメージ
-FROM python:3.11
+# Python 3.11の公式イメージ OSのversionを指定（開発環境用）
+FROM mcr.microsoft.com/devcontainers/python:3.11-bookworm
 
 # 作業ディレクトリを指定
 WORKDIR /workspace

@@ -1,5 +1,5 @@
-# 本番環境用バックエンドDockerfile
-FROM python:3.11-slim
+# 本番環境用バックエンドDockerfile（高セキュリティ・軽量化された最小限の実行環境）
+FROM python:3.11-slim-bookworm
 
 # 作業ディレクトリの設定
 WORKDIR /app
