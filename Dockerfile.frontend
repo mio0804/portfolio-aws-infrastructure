@@ -1,0 +1,44 @@
+# 本番環境用フロントエンドDockerfile
+
+# ============= ビルドステージ =============
+FROM node:20-alpine AS builder
+
+# 作業ディレクトリの設定
+WORKDIR /app
+
+# package.jsonとpackage-lock.jsonをコピー
+COPY frontend/package*.json ./
+
+# 依存関係のインストール（CI用のクリーンインストール）
+RUN npm ci --only=production
+
+# 開発用依存関係もインストール（ビルドに必要）
+COPY frontend/package*.json ./
+RUN npm ci
+
+# アプリケーションコードをコピー
+COPY frontend/ .
+
+# 本番用ビルド
+RUN npm run build
+
+# ============= 配信ステージ =============
+FROM nginx:alpine
+
+# ビルドステージから成果物をコピー
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# nginx設定ファイルをコピー
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# ポート8080を公開
+EXPOSE 8080
+
+# ヘルスチェック
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1
+
+# nginxはデフォルトでnginxユーザーとして実行されるため、
+# カスタムのユーザー作成やentrypoint.shは不要
+# nginx:alpineの標準的なテンプレート処理機能を使用します
+# backend:5000はService Connectで直接解決されるため、環境変数は不要
