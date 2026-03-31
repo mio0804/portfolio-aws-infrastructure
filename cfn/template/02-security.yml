@@ -1,0 +1,251 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: IAM Roles and Security Groups.
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  # ----------------------------------------------------------
+  # Security Group
+  # ----------------------------------------------------------
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security Group for ALB"
+      VpcId: {Fn::ImportValue: !Sub "${ProjectName}-vpc-id"}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-alb-sg"
+
+  EcsFrontSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security Group for ECS Frontend"
+      VpcId: {Fn::ImportValue: !Sub "${ProjectName}-vpc-id"}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !Ref AlbSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-ecs-front-sg"
+
+  EcsBackSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security Group for ECS Backend"
+      VpcId: {Fn::ImportValue: !Sub "${ProjectName}-vpc-id"}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          SourceSecurityGroupId: !Ref EcsFrontSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-ecs-back-sg"
+
+  RdsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security Group for RDS"
+      VpcId: {Fn::ImportValue: !Sub "${ProjectName}-vpc-id"}
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref EcsBackSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-rds-sg"
+
+  # ----------------------------------------------------------
+  # IAM Policy
+  # ----------------------------------------------------------
+  FrontTaskExecutionRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-front-task-execution-policy"
+      Roles:
+        - !Ref FrontTaskExecutionRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - "ecr:GetAuthorizationToken"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+            Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ProjectName}-front-repo"
+
+  BackTaskPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-back-task-policy"
+      Roles:
+        - !Ref BackTaskRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: "s3:ListBucket"
+            Resource: !Sub "arn:aws:s3:::${ProjectName}-bucket"
+          - Effect: Allow
+            Action: 
+              - "s3:GetObject"
+              - "s3:PutObject"
+              - "s3:DeleteObject"
+              - "s3:AbortMultipartUpload"
+            Resource: !Sub "arn:aws:s3:::${ProjectName}-bucket/*"
+          - Effect: Allow
+            Action:
+              - "cognito-idp:describeUserPoolClient"
+              - "cognito-idp:ListUsers"
+            Resource: {Fn::ImportValue: !Sub "${ProjectName}-userpool-arn"}
+          - Effect: Allow
+            Action: 
+              - "ssm:GetParameters"
+              - "ssm:GetParameter"
+              - "kms:Decrypt" # SSM SecureString用
+            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ProjectName}/*"
+
+  BackTaskExecutionRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-back-task-execution-policy"
+      Roles:
+        - !Ref BackTaskExecutionRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - "ecr:GetAuthorizationToken"
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:BatchGetImage"
+            Resource: !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${ProjectName}-back-repo"
+          - Effect: Allow
+            Action:
+              - "ssm:GetParameters"
+              - "ssm:GetParameter"
+            Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ProjectName}/*"
+
+  # ----------------------------------------------------------
+  # IAM Role
+  # ----------------------------------------------------------
+  FrontTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-front-task-execution-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-front-task-execution-role"
+
+  BackTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-back-task-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-back-task-role"
+
+  BackTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-back-task-execution-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-back-task-execution-role"
+
+################################################################################
+# Outputs
+################################################################################
+Outputs:
+  EcsFrontSecurityGroupId:
+    Description: "ECS Frontend SecurityGroup ID"
+    Value: !GetAtt EcsFrontSecurityGroup.GroupId
+    Export:
+      Name: !Sub "${ProjectName}-ecs-front-sg-id"
+
+  EcsBackSecurityGroupId:
+    Description: "ECS Backend SecurityGroup ID"
+    Value: !GetAtt EcsBackSecurityGroup.GroupId
+    Export:
+      Name: !Sub "${ProjectName}-ecs-back-sg-id"
+  
+  RdsSecurityGroupId:
+    Description: "RDS SecurityGroup ID"
+    Value: !GetAtt RdsSecurityGroup.GroupId
+    Export:
+      Name: !Sub "${ProjectName}-rds-sg-id"
+
+  AlbSecurityGroupId:
+    Description: "ALB SecurityGroup ID"
+    Value: !GetAtt AlbSecurityGroup.GroupId
+    Export:
+      Name: !Sub "${ProjectName}-alb-sg-id"
+
+  FrontTaskExecutionRoleArn:
+    Description: "ARN of Front Task Execution Role"
+    Value: !GetAtt FrontTaskExecutionRole.Arn
+    Export:
+      Name: !Sub "${ProjectName}-front-task-execution-role-arn"
+
+  BackTaskRoleArn:
+    Description: "ARN of Back Task Role"
+    Value: !GetAtt BackTaskRole.Arn
+    Export:
+      Name: !Sub "${ProjectName}-back-task-role-arn"
+
+  BackTaskExecutionRoleArn:
+    Description: "ARN of Back Task Execution Role"
+    Value: !GetAtt BackTaskExecutionRole.Arn
+    Export:
+      Name: !Sub "${ProjectName}-back-task-execution-role-arn"

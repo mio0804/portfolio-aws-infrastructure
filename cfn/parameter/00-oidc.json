@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "ProjectName",
+    "ParameterValue": "portfolio"
+  },
+  {
+    "ParameterKey": "GitHubRepoOwner",
+    "ParameterValue": "mio0804"
+  },
+  {
+    "ParameterKey": "GitHubRepoName",
+    "ParameterValue": "portfolio-aws-infrastructure"
+  },
+  {
+    "ParameterKey": "GitHubBranchName",
+    "ParameterValue": "main"
+  }
+]

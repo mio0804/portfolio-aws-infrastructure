@@ -1,0 +1,18 @@
+[
+  {
+    "ParameterKey": "ProjectName",
+    "ParameterValue": "portfolio"
+  },
+  {
+    "ParameterKey": "VpcCidr",
+    "ParameterValue": "10.0.16.0/20"
+  },
+  {
+    "ParameterKey": "PubSubnet1aCidr",
+    "ParameterValue": "10.0.16.0/24"
+  },
+  {
+    "ParameterKey": "PubSubnet1cCidr",
+    "ParameterValue": "10.0.17.0/24"
+  }
+]

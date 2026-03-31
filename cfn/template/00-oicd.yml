@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: OIDC Provider and IAM Role for GitHub Actions.
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'  
+  
+  GitHubRepoOwner:
+    Type: String
+    Description: "Owner of the GitHub repository"
+
+  GitHubRepoName:
+    Type: String
+    Description: "Name of the GitHub repository"
+
+  GitHubBranchName:
+    Type: String
+    Description: "Name of the GitHub branch"
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  # IDプロバイダは既に手動で作成済みなためメモとして残す
+  # ----------------------------------------------------------
+  # OIDC Provider
+  # ----------------------------------------------------------
+  # GithubOidc:
+  #   Type: AWS::IAM::OIDCProvider
+  #   Properties:
+  #     Url: https://token.actions.githubusercontent.com
+  #     ClientIdList:
+  #       - sts.amazonaws.com
+  #     ThumbprintList:
+  #       - xxxx # GitHubの証明書の指紋
+
+  # ----------------------------------------------------------
+  # IAM Role
+  # ----------------------------------------------------------
+  GithubOidcRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-github-oidc-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: "sts.amazonaws.com"
+              StringLike:
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubRepoOwner}/${GitHubRepoName}:ref:refs/heads/${GitHubBranchName}"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess  # 学習用として広めに設定
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-github-oidc-role"
+
+################################################################################
+# Outputs
+################################################################################
+Outputs:
+  GithubOidcRoleArn:
+    Description: "ARN of the IAM Role for GitHub OIDC"
+    Value: !GetAtt GithubOidcRole.Arn
