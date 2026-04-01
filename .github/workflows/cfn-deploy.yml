@@ -33,17 +33,17 @@ jobs:
       - name: Validate 01-Network
         run: aws cloudformation validate-template --template-body file://cfn/template/01-network.yml
 
-      - name: Validate 02-Security
-        run: aws cloudformation validate-template --template-body file://cfn/template/02-security.yml
+      - name: Validate 02-Cognito
+        run: aws cloudformation validate-template --template-body file://cfn/template/02-cognito.yml
 
-      - name: Validate 03-DataStore
-        run: aws cloudformation validate-template --template-body file://cfn/template/03-datastore.yml
+      - name: Validate 03-Security
+        run: aws cloudformation validate-template --template-body file://cfn/template/03-security.yml
 
-      - name: Validate 04-Loadbalancer
-        run: aws cloudformation validate-template --template-body file://cfn/template/04-loadbalancer.yml
+      - name: Validate 04-DataStore
+        run: aws cloudformation validate-template --template-body file://cfn/template/04-datastore.yml
 
-      - name: Validate 05-Cognito
-        run: aws cloudformation validate-template --template-body file://cfn/template/05-cognito.yml
+      - name: Validate 05-Loadbalancer
+        run: aws cloudformation validate-template --template-body file://cfn/template/05-loadbalancer.yml
 
       - name: Validate 06-App-Ecs
         run: aws cloudformation validate-template --template-body file://cfn/template/06-app-ecs.yml
@@ -74,43 +74,43 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 02. Security Stack
-      - name: Deploy 02-Security
+      # 02. Cognito Stack
+      - name: Deploy 02-Cognito
         run: |
           aws cloudformation deploy \
-            --template-file cfn/template/02-security.yml \
-            --stack-name portfolio-02-security \
-            --parameter-overrides file://cfn/parameter/02-security.json \
+            --template-file cfn/template/02-cognito.yml \
+            --stack-name portfolio-02-cognito \
+            --parameter-overrides file://cfn/parameter/02-cognito.json \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 03. DataStore Stack
-      - name: Deploy 03-DataStore
+      # 03. Security Stack
+      - name: Deploy 03-Security
         run: |
           aws cloudformation deploy \
-            --template-file cfn/template/03-datastore.yml \
-            --stack-name portfolio-03-datastore \
-            --parameter-overrides file://cfn/parameter/03-datastore.json \
+            --template-file cfn/template/03-security.yml \
+            --stack-name portfolio-03-security \
+            --parameter-overrides file://cfn/parameter/03-security.json \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 04. LoadBalancer Stack
-      - name: Deploy 04-LoadBalancer
+      # 04. DataStore Stack
+      - name: Deploy 04-DataStore
         run: |
           aws cloudformation deploy \
-            --template-file cfn/template/04-loadbalancer.yml \
-            --stack-name portfolio-04-loadbalancer \
-            --parameter-overrides file://cfn/parameter/04-loadbalancer.json \
+            --template-file cfn/template/04-datastore.yml \
+            --stack-name portfolio-04-datastore \
+            --parameter-overrides file://cfn/parameter/04-datastore.json \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 05. Cognito Stack
-      - name: Deploy 05-Cognito
+      # 05. LoadBalancer Stack
+      - name: Deploy 05-LoadBalancer
         run: |
           aws cloudformation deploy \
-            --template-file cfn/template/05-cognito.yml \
-            --stack-name portfolio-05-cognito \
-            --parameter-overrides file://cfn/parameter/05-cognito.json \
+            --template-file cfn/template/05-loadbalancer.yml \
+            --stack-name portfolio-05-loadbalancer \
+            --parameter-overrides file://cfn/parameter/05-loadbalancer.json \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
