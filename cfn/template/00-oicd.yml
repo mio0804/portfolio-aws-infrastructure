@@ -57,7 +57,9 @@ Resources:
               StringEquals:
                 token.actions.githubusercontent.com:aud: "sts.amazonaws.com"
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubRepoOwner}/${GitHubRepoName}:ref:refs/heads/${GitHubBranchName}"
+                token.actions.githubusercontent.com:sub:
+                  - !Sub "repo:${GitHubRepoOwner}/${GitHubRepoName}:ref:refs/heads/${GitHubBranchName}"
+                  - !Sub "repo:${GitHubRepoOwner}/${GitHubRepoName}:pull_request"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess  # 学習用として広めに設定
       Tags:
