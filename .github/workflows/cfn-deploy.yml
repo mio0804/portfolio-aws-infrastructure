@@ -21,8 +21,8 @@ jobs:
         run: pip install cfn-lint
 
       - name: Run cfn-lint
-        # 警告もエラーとして扱いたい場合は --strict を付与
-        run: cfn-lint cfn/template/*.yml --strict
+        # 警告もエラーとして扱いたい場合は --non-zero-exit-code で warning を指定
+        run: cfn-lint cfn/template/*.yml --non-zero-exit-code warning
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
