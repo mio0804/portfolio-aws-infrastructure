@@ -13,6 +13,6 @@
   },
   {
     "ParameterKey": "GitHubBranchName",
-    "ParameterValue": "main"
+    "ParameterValue": "*"
   }
 ]
