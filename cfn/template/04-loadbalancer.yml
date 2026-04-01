@@ -73,7 +73,7 @@ Resources:
     Properties:
       Name: "animalog-nabinemu.com."
       HostedZoneConfig:
-        Comment: "Hosted zone for ${ProjectName}"
+        Comment: !Sub "Hosted zone for ${ProjectName}"
 
   DnsCNameRecord:
     Type: AWS::Route53::RecordSet

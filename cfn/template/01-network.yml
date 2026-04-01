@@ -39,7 +39,8 @@ Resources:
   PubSubnet1a:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: "ap-northeast-1a"
+      # 環境によってはAZ名が異なる可能性があるため、動的に取得する
+      AvailabilityZone: !Select [ 0, !GetAZs '']  # 空文字は現在のリージョンを意味する
       VpcId: !Ref Vpc
       CidrBlock: !Ref PubSubnet1aCidr
       Tags:
@@ -49,7 +50,7 @@ Resources:
   PubSubnet1c:
     Type: AWS::EC2::Subnet
     Properties:
-      AvailabilityZone: "ap-northeast-1c"
+      AvailabilityZone: !Select [ 1, !GetAZs '']
       VpcId: !Ref Vpc
       CidrBlock: !Ref PubSubnet1cCidr
       Tags:
