@@ -1,0 +1,125 @@
+name: AWS CloudFormation Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write # OIDC認証に必須
+  contents: read
+
+jobs:
+  # --- テストジョブ (PRとPush両方で実行) ---
+  test-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cfn-lint
+        run: pip install cfn-lint
+
+      - name: Run cfn-lint
+        # 警告もエラーとして扱いたい場合は --strict を付与
+        run: cfn-lint cfn/template/*.yml --strict
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      - name: Validate 01-Network
+        run: aws cloudformation validate-template --template-body file://cfn/template/01-network.yml
+
+      - name: Validate 02-Security
+        run: aws cloudformation validate-template --template-body file://cfn/template/02-security.yml
+
+      - name: Validate 03-DataStore
+        run: aws cloudformation validate-template --template-body file://cfn/template/03-datastore.yml
+
+      - name: Validate 04-Loadbalancer
+        run: aws cloudformation validate-template --template-body file://cfn/template/04-loadbalancer.yml
+
+      - name: Validate 05-Cognito
+        run: aws cloudformation validate-template --template-body file://cfn/template/05-cognito.yml
+
+      - name: Validate 06-App-Ecs
+        run: aws cloudformation validate-template --template-body file://cfn/template/06-app-ecs.yml
+
+  # --- デプロイジョブ (mainへのPush時のみ実行) ---
+  deploy:
+    needs: test-and-validate # テストが成功した時のみ実行
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      # 01. Network Stack
+      - name: Deploy 01-Network
+        # --no-fail-on-empty-changeset を付与することで、差分がない場合のエラーを回避
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/01-network.yml \
+            --stack-name portfolio-01-network \
+            --parameter-overrides file://cfn/parameter/01-network.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      # 02. Security Stack
+      - name: Deploy 02-Security
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/02-security.yml \
+            --stack-name portfolio-02-security \
+            --parameter-overrides file://cfn/parameter/02-security.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      # 03. DataStore Stack
+      - name: Deploy 03-DataStore
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/03-datastore.yml \
+            --stack-name portfolio-03-datastore \
+            --parameter-overrides file://cfn/parameter/03-datastore.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      # 04. LoadBalancer Stack
+      - name: Deploy 04-LoadBalancer
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/04-loadbalancer.yml \
+            --stack-name portfolio-04-loadbalancer \
+            --parameter-overrides file://cfn/parameter/04-loadbalancer.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      # 05. Cognito Stack
+      - name: Deploy 05-Cognito
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/05-cognito.yml \
+            --stack-name portfolio-05-cognito \
+            --parameter-overrides file://cfn/parameter/05-cognito.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      # 06. App-Ecs Stack
+      - name: Deploy 06-App-Ecs
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/06-app-ecs.yml \
+            --stack-name portfolio-06-app-ecs \
+            --parameter-overrides file://cfn/parameter/06-app-ecs.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
