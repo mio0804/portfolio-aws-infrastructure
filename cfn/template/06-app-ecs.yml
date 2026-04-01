@@ -1,0 +1,320 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ECS Cluster, Fargate Services, and ECR.
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  # ----------------------------------------------------------
+  # ECR
+  # ----------------------------------------------------------
+  FrontRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${ProjectName}-front-repo"
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep only the last 5 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-front-repo"
+
+  BackRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "${ProjectName}-back-repo"
+      ImageTagMutability: IMMUTABLE
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Keep only the last 5 images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": {
+                  "type": "expire"
+                }
+              }
+            ]
+          }
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-back-repo"
+
+  # ----------------------------------------------------------
+  # CloudMap
+  # ----------------------------------------------------------
+  CloudMapNamespace:
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+    Properties:
+      Name: !Sub "${ProjectName}-namespace"
+      Vpc: {Fn::ImportValue: !Sub "${ProjectName}-vpc-id"}
+      Description: "CloudMap namespace for ECS Service Connect"
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-namespace"
+
+  # ----------------------------------------------------------
+  # ECS
+  # ----------------------------------------------------------
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub "${ProjectName}-cluster"
+      CapacityProviders:
+        - FARGATE
+        - FARGATE_SPOT
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-cluster"
+
+  FrontTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "${ProjectName}-frontend-task"
+      Cpu: "512"
+      Memory: "1024"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      # --- IAMロールの紐付け ---
+      ExecutionRoleArn: {Fn::ImportValue: !Sub "${ProjectName}-front-task-execution-role-arn"}
+      # --- コンテナ設定 ---
+      ContainerDefinitions:
+        - Name: frontend
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-front-repo:latest"
+          Essential: true
+          Cpu: 512
+          Memory: 1024
+          MemoryReservation: 256
+          PortMappings:
+            - ContainerPort: 8080
+              HostPort: 8080
+              Protocol: tcp
+              AppProtocol: http
+              Name: frontend-8080-tcp
+          # --- ログ設定 ---
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "/ecs/${ProjectName}/frontend/task"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          # --- ヘルスチェック設定 ---
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "wget --quiet --tries=1 --spider http://localhost:8080/health || exit 1"
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-frontend-task"
+
+# バックエンド用のタスク定義
+  BackTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub "${ProjectName}-backend-task"
+      Cpu: "512"
+      Memory: "1024"
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      # --- IAMロールの紐付け ---
+      ExecutionRoleArn: {Fn::ImportValue: !Sub "${ProjectName}-back-task-execution-role-arn"}
+      TaskRoleArn: {Fn::ImportValue: !Sub "${ProjectName}-back-task-role-arn"}
+      # --- コンテナ設定 ---
+      ContainerDefinitions:
+        - Name: backend
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ProjectName}-back-repo:latest"
+          Essential: true
+          Cpu: 512
+          Memory: 1024
+          MemoryReservation: 512
+          PortMappings:
+            - ContainerPort: 5000
+              HostPort: 5000
+              Protocol: tcp
+              Name: backend-5000-tcp      
+          # --- 環境変数の設定 ---
+          Environment:
+            - Name: FLASK_APP
+              Value: "backend.app"
+            - Name: FLASK_ENV
+              Value: "production"
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: USE_RDS
+              Value: "true"
+            - Name: USE_S3
+              Value: "true"
+            - Name: USE_COGNITO
+              Value: "true"
+            - Name: S3_BUCKET_NAME
+              Value: {Fn::ImportValue: !Sub "${ProjectName}-s3-bucket-name"}
+            - Name: RDS_DATABASE
+              Value: !Ref ProjectName
+            - Name: RDS_USERNAME
+              Value: "admin"
+            - Name: RDS_ENDPOINT
+              Value: {Fn::ImportValue: !Sub "${ProjectName}-rds-endpoint"}
+            - Name: COGNITO_USER_POOL_ID
+              Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-id"}
+            - Name: COGNITO_APP_CLIENT_ID
+              Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-client-id"}
+            - Name: COGNITO_DOMAIN
+              Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-domain-name"}
+            - Name: COGNITO_REDIRECT_URI
+              Value: "https://animalog-nabinemu.com/callback"
+            - Name: COGNITO_LOGOUT_URI
+              Value: "https://animalog-nabinemu.com/login"
+            - Name: COGNITO_REGION
+              Value: !Ref AWS::Region
+            - Name: MAX_CONTENT_LENGTH
+              Value: "16777216"
+          # --- ログ設定 ---
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Sub "/ecs/${ProjectName}-backend-task"
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+          # --- ヘルスチェック設定 ---
+          HealthCheck:
+            Command:
+              - "CMD-SHELL"
+              - "curl -f http://localhost:5000/api/health || exit 1"
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 60
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-backend-task"
+
+  FrontService:
+    Type: AWS::ECS::Service
+    DependsOn: CloudMapNamespace
+    Properties:
+      ServiceName: !Sub "${ProjectName}-frontend-service"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref FrontTaskDefinition
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1a-id"}
+            - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1c-id"}
+          SecurityGroups:
+            - {Fn::ImportValue: !Sub "${ProjectName}-ecs-front-sg-id"}
+          AssignPublicIp: ENABLED
+      LoadBalancers:
+        - TargetGroupArn: {Fn::ImportValue: !Sub "${ProjectName}-tg-arn"}
+          ContainerName: frontend
+          ContainerPort: 8080
+      ServiceConnectConfiguration:
+        Enabled: true
+        Namespace: !Sub "${ProjectName}-namespace"
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-frontend-service"
+
+  BackService:
+    Type: AWS::ECS::Service
+    DependsOn: CloudMapNamespace
+    Properties:
+      ServiceName: !Sub "${ProjectName}-backend-service"
+      Cluster: !Ref Cluster
+      TaskDefinition: !Ref BackTaskDefinition
+      DesiredCount: 2
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1a-id"}
+            - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1c-id"}
+          SecurityGroups:
+            - {Fn::ImportValue: !Sub "${ProjectName}-ecs-back-sg-id"}
+          AssignPublicIp: ENABLED
+      ServiceConnectConfiguration:
+        Enabled: true
+        Namespace: !Sub "${ProjectName}-namespace"
+        Services:
+          - PortName: backend-5000-tcp
+            DiscoveryName: backend
+            ClientAliases:
+              - Port: 5000
+                DnsName: backend
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-backend-service"
+
+  # ----------------------------------------------------------
+  # CloudWatch Logs
+  # ----------------------------------------------------------
+  EcsFrontTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${ProjectName}/frontend/task"
+      RetentionInDays: 3
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-ecs-front-loggroup"
+
+  EcsBackTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${ProjectName}/backend/task"
+      RetentionInDays: 3
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-ecs-back-loggroup"
+
+  RdsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/rds/instance/${ProjectName}-rds/postgres"
+      RetentionInDays: 3
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-rds-loggroup"

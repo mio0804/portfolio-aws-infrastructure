@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: VPC, Subnets, and Routing Infrastructure.
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
+  VpcCidr:
+    Type: String
+    Description: "CIDR block for the VPC"
+
+  PubSubnet1aCidr:
+    Type: String
+    Description: "CIDR block for Public Subnet 1a"
+
+  PubSubnet1cCidr:
+    Type: String
+    Description: "CIDR block for Public Subnet 1c"
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidr
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-vpc"
+
+  PubSubnet1a:
+    Type: AWS::EC2::Subnet
+    Properties:
+      # 環境によってはAZ名が異なる可能性があるため、動的に取得する
+      AvailabilityZone: !Select [ 0, !GetAZs '']  # 空文字は現在のリージョンを意味する
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref PubSubnet1aCidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-pub-subnet-1a"
+
+  PubSubnet1c:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: !Select [ 1, !GetAZs '']
+      VpcId: !Ref Vpc
+      CidrBlock: !Ref PubSubnet1cCidr
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-pub-subnet-1c"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-igw"
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PubRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-rtb"
+
+  PubRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PubRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PubSubnet1aRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PubSubnet1a
+      RouteTableId: !Ref PubRouteTable
+
+  PubSubnet1cRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PubSubnet1c
+      RouteTableId: !Ref PubRouteTable
+
+  S3VpcEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      RouteTableIds:
+        - !Ref PubRouteTable
+
+################################################################################
+# Outputs
+################################################################################
+Outputs:
+  VpcId:
+    Description: "VPC ID"
+    Value: !Ref Vpc
+    Export:
+      Name: !Sub "${ProjectName}-vpc-id"
+
+  PubSubnet1aId:
+    Description: "Public Subnet 1a ID"
+    Value: !Ref PubSubnet1a
+    Export:
+      Name: !Sub "${ProjectName}-pub-subnet-1a-id"
+
+  PubSubnet1cId:
+    Description: "Public Subnet 1c ID"
+    Value: !Ref PubSubnet1c
+    Export:
+      Name: !Sub "${ProjectName}-pub-subnet-1c-id"

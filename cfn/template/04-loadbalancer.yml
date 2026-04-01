@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ALB, Target Groups, and Route53.
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'    
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  # ----------------------------------------------------------
+  # ALB
+  # ----------------------------------------------------------
+  Alb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${ProjectName}-alb"
+      Subnets:
+        - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1a-id"}
+        - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1c-id"}
+      SecurityGroups:
+        - {Fn::ImportValue: !Sub "${ProjectName}-alb-sg-id"}
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-alb"
+
+  HttpsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Alb
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Sub "{{resolve:ssm:/${ProjectName}/CertificateArn:1}}"
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
+
+  HttpListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref Alb
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: 443
+            StatusCode: HTTP_301
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: !Sub "${ProjectName}-tg"
+      Port: 8080
+      Protocol: HTTP
+      TargetType: ip
+      HealthCheckPath: /health
+      VpcId: {Fn::ImportValue: !Sub "${ProjectName}-vpc-id"}
+
+  # ----------------------------------------------------------
+  # Route53
+  # ----------------------------------------------------------
+  HostZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: "animalog-nabinemu.com."
+      HostedZoneConfig:
+        Comment: !Sub "Hosted zone for ${ProjectName}"
+
+  DnsCNameRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostZone
+      Name: "_7f7d94ccb20b340025aaba9a7a6455af.animalog-nabinemu.com."
+      Type: CNAME
+      TTL: 60
+      ResourceRecords:
+        - "_1e93fec2b5c7a0fea7a7a1aa3a29f7db.xlfgrmvvlj.acm-validations.aws."
+
+  DnsARecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostZone
+      Name: "animalog-nabinemu.com."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt Alb.DNSName
+        HostedZoneId: !GetAtt Alb.CanonicalHostedZoneID
+
+################################################################################
+# Outputs
+################################################################################
+Outputs:
+  TargetGroupArn:
+    Description: "Target Group ARN"
+    Value: !Ref TargetGroup
+    Export:
+      Name: !Sub "${ProjectName}-tg-arn"

@@ -1,0 +1,82 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Cognito User Pool and App Client.
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'    
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Sub "${ProjectName}-userpool"
+      AutoVerifiedAttributes:
+        - email
+      Schema:
+        - Name: email
+          AttributeDataType: string
+          Required: true
+          Mutable: true
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref UserPool
+      ClientName: !Sub "${ProjectName}-userpool-client"
+      GenerateSecret: false
+      CallbackURLs:
+        - "https://animalog-nabinemu.com/callback"
+      LogoutURLs:
+        - "https://animalog-nabinemu.com/login"
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthFlowsUserPoolClient: true   # OAuth 2.0認証サーバー機能を有効化
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub "${ProjectName}-auth-animalog-nabinemu"
+      UserPoolId: !Ref UserPool
+
+################################################################################
+# Outputs
+################################################################################
+Outputs:
+  UserPoolId:
+    Description: "Cognito User Pool ID"
+    Value: !Ref UserPool
+    Export:
+      Name: !Sub "${ProjectName}-userpool-id"
+
+  UserPoolClientId:
+    Description: "Cognito User Pool Client ID"
+    Value: !Ref UserPoolClient
+    Export:
+      Name: !Sub "${ProjectName}-userpool-client-id"
+
+  UserPoolDomainName:
+    Description: "Cognito User Pool Domain Name"
+    Value: !Ref UserPoolDomain
+    Export:
+      Name: !Sub "${ProjectName}-userpool-domain-name"
+
+  UserPoolArn:
+    Description: "Cognito User Pool ARN"
+    Value: !GetAtt UserPool.Arn
+    Export:
+      Name: !Sub "${ProjectName}-userpool-arn"

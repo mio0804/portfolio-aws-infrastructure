@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: RDS and S3 Bucket.
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  # ----------------------------------------------------------
+  # RDS
+  # ----------------------------------------------------------
+  RdsSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupName: !Sub "${ProjectName}-rds-subnet-group"
+      DBSubnetGroupDescription: "Subnet group for RDS instance"
+      SubnetIds:
+        - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1a-id"}
+        - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1c-id"}
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-rds-subnet-group"
+
+  RdsInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub "${ProjectName}-rds"
+      DBName: !Ref ProjectName
+      AllocatedStorage: 20
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      EngineVersion: "17.6"
+      MasterUsername: !Sub "${ProjectName}-admin"
+      MasterUserPassword: !Sub "{{resolve:ssm-secure:/${ProjectName}/MasterUserPassword:1}}"
+      VPCSecurityGroups:
+        - {Fn::ImportValue: !Sub "${ProjectName}-rds-sg-id"}
+      DBSubnetGroupName: !Ref RdsSubnetGroup
+      PubliclyAccessible: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-rds"
+
+  # ----------------------------------------------------------
+  # S3
+  # ----------------------------------------------------------
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-bucket"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-bucket"
+
+################################################################################
+# Outputs
+################################################################################
+Outputs:
+  RdsEndpoint:
+    Description: "RDS Endpoint"
+    Value: !GetAtt RdsInstance.Endpoint.Address
+    Export:
+      Name: !Sub "${ProjectName}-rds-endpoint"
+
+  S3BucketName:
+    Description: "S3 Bucket Name"
+    Value: !Ref S3Bucket
+    Export:
+      Name: !Sub "${ProjectName}-s3-bucket-name"
