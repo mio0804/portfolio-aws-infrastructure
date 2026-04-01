@@ -22,7 +22,7 @@ Resources:
         - email
       Schema:
         - Name: email
-          AttributeDataType: string
+          AttributeDataType: String
           Required: true
           Mutable: true
 
