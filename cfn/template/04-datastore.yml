@@ -38,7 +38,7 @@ Resources:
       DBInstanceClass: db.t3.micro
       Engine: postgres
       EngineVersion: "17.6"
-      MasterUsername: !Sub "${ProjectName}-admin"
+      MasterUsername: "admin"
       MasterUserPassword: !Sub "{{resolve:ssm-secure:/${ProjectName}/MasterUserPassword:1}}"
       VPCSecurityGroups:
         - {Fn::ImportValue: !Sub "${ProjectName}-rds-sg-id"}
@@ -54,7 +54,7 @@ Resources:
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${ProjectName}-bucket"
+      BucketName: !Sub "${ProjectName}-animalog-bucket"
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         IgnorePublicAcls: true
