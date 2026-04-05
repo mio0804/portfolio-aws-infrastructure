@@ -39,14 +39,17 @@ jobs:
       - name: Validate 03-Security
         run: aws cloudformation validate-template --template-body file://cfn/template/03-security.yml
 
-      - name: Validate 04-DataStore
-        run: aws cloudformation validate-template --template-body file://cfn/template/04-datastore.yml
+      - name: Validate 04-Monitoring
+        run: aws cloudformation validate-template --template-body file://cfn/template/04-monitoring.yml
 
-      - name: Validate 05-Loadbalancer
-        run: aws cloudformation validate-template --template-body file://cfn/template/05-loadbalancer.yml
+      - name: Validate 05-DataStore
+        run: aws cloudformation validate-template --template-body file://cfn/template/05-datastore.yml
 
-      - name: Validate 06-App-Ecs
-        run: aws cloudformation validate-template --template-body file://cfn/template/06-app-ecs.yml
+      - name: Validate 06-Loadbalancer
+        run: aws cloudformation validate-template --template-body file://cfn/template/06-loadbalancer.yml
+
+      - name: Validate 07-App-Ecs
+        run: aws cloudformation validate-template --template-body file://cfn/template/07-app-ecs.yml
 
   # --- デプロイジョブ (mainへのPush時のみ実行) ---
   deploy:
