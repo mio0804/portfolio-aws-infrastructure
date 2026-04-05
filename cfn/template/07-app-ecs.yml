@@ -137,7 +137,7 @@ Resources:
             - Name: RDS_DATABASE
               Value: !Ref ProjectName
             - Name: RDS_USERNAME
-              Value: "admin"
+              Value: !Sub "${ProjectName}_admin"
             - Name: RDS_ENDPOINT
               Value: {Fn::ImportValue: !Sub "${ProjectName}-rds-endpoint"}
             - Name: AWS_SSM_PARAMETER_NAME
