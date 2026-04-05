@@ -181,7 +181,7 @@ Resources:
       ServiceName: !Sub "${ProjectName}-frontend-service"
       Cluster: !Ref Cluster
       TaskDefinition: !Ref FrontTaskDefinition
-      DesiredCount: 2
+      DesiredCount: 1
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
@@ -209,7 +209,7 @@ Resources:
       ServiceName: !Sub "${ProjectName}-backend-service"
       Cluster: !Ref Cluster
       TaskDefinition: !Ref BackTaskDefinition
-      DesiredCount: 2
+      DesiredCount: 1
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
