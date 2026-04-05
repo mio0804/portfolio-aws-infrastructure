@@ -140,6 +140,8 @@ Resources:
               Value: "admin"
             - Name: RDS_ENDPOINT
               Value: {Fn::ImportValue: !Sub "${ProjectName}-rds-endpoint"}
+            - Name: AWS_SSM_PARAMETER_NAME
+              Value: !Sub /${ProjectName}/MasterUserPassword
             - Name: COGNITO_USER_POOL_ID
               Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-id"}
             - Name: COGNITO_APP_CLIENT_ID
