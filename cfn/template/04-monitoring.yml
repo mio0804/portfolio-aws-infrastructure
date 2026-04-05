@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudWatch Logs for ECS and RDS.
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  # ----------------------------------------------------------
+  # CloudWatch Logs
+  # ----------------------------------------------------------
+  EcsFrontTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${ProjectName}/frontend/task"
+      RetentionInDays: 3
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-ecs-front-loggroup"
+
+  EcsBackTaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/ecs/${ProjectName}/backend/task"
+      RetentionInDays: 3
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-ecs-back-loggroup"
+
+  RdsLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/rds/instance/${ProjectName}-rds/postgres"
+      RetentionInDays: 3
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-rds-loggroup"

@@ -94,22 +94,32 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 04. DataStore Stack
-      - name: Deploy 04-DataStore
+      # 04. Monitoring Stack
+      - name: Deploy 04-Monitoring
         run: |
           aws cloudformation deploy \
-            --template-file cfn/template/04-datastore.yml \
-            --stack-name portfolio-04-datastore \
-            --parameter-overrides file://cfn/parameter/04-datastore.json \
+            --template-file cfn/template/04-monitoring.yml \
+            --stack-name portfolio-04-monitoring \
+            --parameter-overrides file://cfn/parameter/04-monitoring.json \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 04-01. ECR へログイン
+      # 05. DataStore Stack
+      - name: Deploy 05-DataStore
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/05-datastore.yml \
+            --stack-name portfolio-05-datastore \
+            --parameter-overrides file://cfn/parameter/05-datastore.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      # 05-01. ECR へログイン
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
       
-      # 04-02. Frontend Docker イメージを build & push
+      # 05-02. Frontend Docker イメージを build & push
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -118,7 +128,7 @@ jobs:
           docker build -f Dockerfile.frontend -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      # 04-03. Backend Docker イメージを build & push
+      # 05-03. Backend Docker イメージを build & push
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -127,22 +137,22 @@ jobs:
           docker build -f Dockerfile.backend -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      # 05. LoadBalancer Stack
-      - name: Deploy 05-LoadBalancer
+      # 06. LoadBalancer Stack
+      - name: Deploy 06-LoadBalancer
         run: |
           aws cloudformation deploy \
-            --template-file cfn/template/05-loadbalancer.yml \
-            --stack-name portfolio-05-loadbalancer \
-            --parameter-overrides file://cfn/parameter/05-loadbalancer.json \
+            --template-file cfn/template/06-loadbalancer.yml \
+            --stack-name portfolio-06-loadbalancer \
+            --parameter-overrides file://cfn/parameter/06-loadbalancer.json \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 06. App-Ecs Stack
-      - name: Deploy 06-App-Ecs
+      # 07. App-Ecs Stack
+      - name: Deploy 07-App-Ecs
         run: |
           aws cloudformation deploy \
-            --template-file cfn/template/06-app-ecs.yml \
-            --stack-name portfolio-06-app-ecs \
-            --parameter-overrides file://cfn/parameter/06-app-ecs.json \
+            --template-file cfn/template/07-app-ecs.yml \
+            --stack-name portfolio-07-app-ecs \
+            --parameter-overrides file://cfn/parameter/07-app-ecs.json \
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset

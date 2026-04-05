@@ -158,7 +158,7 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Sub "/ecs/${ProjectName}-backend-task"
+              awslogs-group: !Sub "/ecs/${ProjectName}/backend/task"
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
           # --- ヘルスチェック設定 ---
@@ -231,33 +231,3 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${ProjectName}-backend-service"
-
-  # ----------------------------------------------------------
-  # CloudWatch Logs
-  # ----------------------------------------------------------
-  EcsFrontTaskLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/ecs/${ProjectName}/frontend/task"
-      RetentionInDays: 3
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-ecs-front-loggroup"
-
-  EcsBackTaskLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/ecs/${ProjectName}/backend/task"
-      RetentionInDays: 3
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-ecs-back-loggroup"
-
-  RdsLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/aws/rds/instance/${ProjectName}-rds/postgres"
-      RetentionInDays: 3
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-rds-loggroup"
