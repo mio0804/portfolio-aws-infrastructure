@@ -71,7 +71,7 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "${ProjectName}-front-repo"
-      ImageTagMutability: IMMUTABLE
+      ImageTagMutability: MUTABLE
       LifecyclePolicy:
         LifecyclePolicyText: |
           {
@@ -98,7 +98,7 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Sub "${ProjectName}-back-repo"
-      ImageTagMutability: IMMUTABLE
+      ImageTagMutability: MUTABLE
       LifecyclePolicy:
         LifecyclePolicyText: |
           {
