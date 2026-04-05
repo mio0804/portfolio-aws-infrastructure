@@ -15,19 +15,19 @@ def get_database_url():
             from utils.ssm_parameter import get_rds_password
             
             # 必要な環境変数を取得
-            secret_name = os.getenv('AWS_SSM_PARAMETER_NAME')
+            parameter_name = os.getenv('AWS_SSM_PARAMETER_NAME')
             rds_endpoint = os.getenv('RDS_ENDPOINT')
             rds_database = os.getenv('RDS_DATABASE', 'animalog')
             rds_username = os.getenv('RDS_USERNAME', 'animalog')
             aws_region = os.getenv('AWS_REGION', 'ap-northeast-1')
             
-            if not secret_name:
+            if not parameter_name:
                 raise ValueError("AWS_SSM_PARAMETER_NAME is required when USE_RDS=true")
             if not rds_endpoint:
                 raise ValueError("RDS_ENDPOINT is required when USE_RDS=true")
             
             # Systems Managerからパスワードを取得
-            password = get_rds_password(secret_name, aws_region)
+            password = get_rds_password(parameter_name, aws_region)
             
             # DATABASE_URLを構築（SSL設定を追加）
             return f"postgresql://{rds_username}:{password}@{rds_endpoint}:5432/{rds_database}?sslmode=require"
