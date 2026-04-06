@@ -69,6 +69,20 @@ Resources:
               Protocol: tcp
               AppProtocol: http
               Name: frontend-8080-tcp
+          # --- 環境変数の設定 ---
+          Environment:
+            - Name: VITE_USE_COGNITO
+              Value: "true"
+            - Name: VITE_COGNITO_USER_POOL_ID
+              Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-id"}
+            - Name: VITE_COGNITO_CLIENT_ID
+              Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-client-id"}
+            - Name: VITE_COGNITO_DOMAIN
+              Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-domain-name"}
+            - Name: VITE_COGNITO_REDIRECT_URI
+              Value: "https://animalog-nabinemu.com/callback"
+            - Name: VITE_COGNITO_LOGOUT_URI
+              Value: "https://animalog-nabinemu.com/login"
           # --- ログ設定 ---
           LogConfiguration:
             LogDriver: awslogs
