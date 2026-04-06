@@ -1,0 +1,46 @@
+name: Backend App Deploy
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+
+permissions:
+  id-token: write # OIDC認証に必須
+  contents: read
+
+jobs:
+  deploy:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-1
+
+      # ECR へログイン
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Backend Docker イメージを build & push
+      - name: Build, tag, and push image to Amazon ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: portfolio-back-repo
+        run: |
+          docker build -f Dockerfile.backend -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      # サービスの更新（新しいイメージで再デプロイ）
+      - name: Force new deployment to ECS
+        run: |
+          aws ecs update-service \
+            --cluster portfolio-cluster \
+            --service portfolio-backend-service \
+            --force-new-deployment
