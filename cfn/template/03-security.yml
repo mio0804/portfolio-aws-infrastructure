@@ -109,14 +109,14 @@ Resources:
         Statement:
           - Effect: Allow
             Action: "s3:ListBucket"
-            Resource: !Sub "arn:aws:s3:::${ProjectName}-bucket"
+            Resource: !Sub "arn:aws:s3:::${ProjectName}-animalog-bucket"
           - Effect: Allow
             Action: 
               - "s3:GetObject"
               - "s3:PutObject"
               - "s3:DeleteObject"
               - "s3:AbortMultipartUpload"
-            Resource: !Sub "arn:aws:s3:::${ProjectName}-bucket/*"
+            Resource: !Sub "arn:aws:s3:::${ProjectName}-animalog-bucket/*"
           - Effect: Allow
             Action:
               - "cognito-idp:describeUserPoolClient"
