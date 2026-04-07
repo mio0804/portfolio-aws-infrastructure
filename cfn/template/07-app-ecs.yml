@@ -55,6 +55,7 @@ Resources:
         OperatingSystemFamily: LINUX
       # --- IAMロールの紐付け ---
       ExecutionRoleArn: {Fn::ImportValue: !Sub "${ProjectName}-front-task-execution-role-arn"}
+      TaskRoleArn: {Fn::ImportValue: !Sub "${ProjectName}-front-task-role-arn"}
       # --- コンテナ設定 ---
       ContainerDefinitions:
         - Name: frontend
@@ -214,6 +215,7 @@ Resources:
       ServiceConnectConfiguration:
         Enabled: true
         Namespace: !Sub "${ProjectName}-namespace"
+      EnableExecuteCommand: true
       Tags:
         - Key: Name
           Value: !Sub "${ProjectName}-frontend-service"

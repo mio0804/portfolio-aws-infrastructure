@@ -76,6 +76,23 @@ Resources:
   # ----------------------------------------------------------
   # IAM Policy
   # ----------------------------------------------------------
+  FrontTaskPolicy:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: !Sub "${ProjectName}-front-task-policy"
+        Roles:
+          - !Ref FrontTaskRole
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Action:
+                - "ssmmessages:CreateControlChannel"
+                - "ssmmessages:CreateDataChannel"
+                - "ssmmessages:OpenControlChannel"
+                - "ssmmessages:OpenDataChannel"
+              Resource: "*"
+
   FrontTaskExecutionRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -159,6 +176,21 @@ Resources:
   # ----------------------------------------------------------
   # IAM Role
   # ----------------------------------------------------------
+  FrontTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-front-task-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-front-task-role"
+
   FrontTaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -231,6 +263,12 @@ Outputs:
     Value: !GetAtt AlbSecurityGroup.GroupId
     Export:
       Name: !Sub "${ProjectName}-alb-sg-id"
+
+  FrontTaskRoleArn:
+    Description: "ARN of Front Task Role"
+    Value: !GetAtt FrontTaskRole.Arn
+    Export:
+      Name: !Sub "${ProjectName}-front-task-role-arn"
 
   FrontTaskExecutionRoleArn:
     Description: "ARN of Front Task Execution Role"
