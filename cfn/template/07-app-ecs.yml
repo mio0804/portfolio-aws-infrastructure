@@ -27,20 +27,6 @@ Resources:
         - Key: Name
           Value: !Sub "${ProjectName}-namespace"
 
-  BackendCloudMapService:
-    Type: AWS::ServiceDiscovery::Service
-    Properties:
-      Name: backend
-      NamespaceId: !Ref CloudMapNamespace
-      Description: "CloudMap service for backend ECS tasks"
-      DnsConfig:
-        RoutingPolicy: MULTIVALUE
-        DnsRecords:
-          - Type: A
-            TTL: 60
-      HealthCheckCustomConfig:
-        FailureThreshold: 1
-
   # ----------------------------------------------------------
   # ECS
   # ----------------------------------------------------------
@@ -258,10 +244,6 @@ Resources:
             ClientAliases:
               - Port: 5000
                 DnsName: backend
-      ServiceRegistries:
-        - RegistryArn: !GetAtt  BackendCloudMapService.Arn
-          ContainerName: backend
-          ContainerPort: 5000
       Tags:
         - Key: Name
           Value: !Sub "${ProjectName}-backend-service"
