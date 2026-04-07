@@ -36,6 +36,8 @@ Resources:
         - "https://animalog-nabinemu.com/callback"
       LogoutURLs:
         - "https://animalog-nabinemu.com/login"
+      SupportedIdentityProviders:
+        - COGNITO
       AllowedOAuthFlows:
         - code
       AllowedOAuthFlowsUserPoolClient: true   # OAuth 2.0認証サーバー機能を有効化
