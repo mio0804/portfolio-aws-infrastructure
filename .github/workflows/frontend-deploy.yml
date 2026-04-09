@@ -7,6 +7,7 @@ on:
       - 'frontend/**'
       - 'nginx.conf'
       - 'Dockerfile.frontend'
+  workflow_dispatch:
 
 permissions:
   id-token: write # OIDC認証に必須
@@ -40,9 +41,9 @@ jobs:
           tags: ${{ steps.login-ecr.outputs.registry }}/portfolio-front-repo:latest
           build-args: |
             VITE_USE_COGNITO=true
-            VITE_COGNITO_USER_POOL_ID=${{ secrets.COGNITO_USER_POOL_ID }}
-            VITE_COGNITO_CLIENT_ID=${{ secrets.COGNITO_CLIENT_ID }}
-            VITE_COGNITO_DOMAIN=${{ secrets.COGNITO_DOMAIN }}
+            VITE_COGNITO_USER_POOL_ID=${{ secrets.VITE_COGNITO_USER_POOL_ID }}
+            VITE_COGNITO_CLIENT_ID=${{ secrets.VITE_COGNITO_CLIENT_ID }}
+            VITE_COGNITO_DOMAIN=${{ secrets.VITE_COGNITO_DOMAIN }}
             VITE_COGNITO_REDIRECT_URI=https://animalog-nabinemu.com/callback
             VITE_COGNITO_LOGOUT_URI=https://animalog-nabinemu.com/login
 
