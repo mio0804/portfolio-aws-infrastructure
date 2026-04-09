@@ -136,7 +136,7 @@ Resources:
             Resource: !Sub "arn:aws:s3:::${ProjectName}-animalog-bucket/*"
           - Effect: Allow
             Action:
-              - "cognito-idp:describeUserPoolClient"
+              - "cognito-idp:DescribeUserPoolClient"
               - "cognito-idp:ListUsers"
             Resource: {Fn::ImportValue: !Sub "${ProjectName}-userpool-arn"}
           - Effect: Allow
