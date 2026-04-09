@@ -40,6 +40,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const initializeAuth = async () => {
     try {
+      console.log('VITE_USE_COGNITO:', import.meta.env.VITE_USE_COGNITO);
+      console.log('VITE_COGNITO_USER_POOL_ID:', import.meta.env.VITE_COGNITO_USER_POOL_ID);
+      console.log('VITE_COGNITO_CLIENT_ID:', import.meta.env.VITE_COGNITO_CLIENT_ID);
+      console.log('VITE_COGNITO_DOMAIN:', import.meta.env.VITE_COGNITO_DOMAIN);
+      console.log('VITE_COGNITO_REDIRECT_URI:', import.meta.env.VITE_COGNITO_REDIRECT_URI);
+      console.log('VITE_COGNITO_LOGOUT_URI:', import.meta.env.VITE_COGNITO_LOGOUT_URI);
       // 認証サービスの初期化
       await authService.initialize();
       setIsInitialized(true);
