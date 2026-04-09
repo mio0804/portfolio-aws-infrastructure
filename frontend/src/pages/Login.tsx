@@ -16,6 +16,7 @@ const Login: React.FC = () => {
       await login();
       navigate('/');
     } catch (err) {
+      console.error('詳細なログインエラー:', err);
       setError('ログインに失敗しました');
     } finally {
       setIsLoading(false);
