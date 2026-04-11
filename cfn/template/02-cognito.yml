@@ -20,8 +20,6 @@ Resources:
       UserPoolName: !Sub "${ProjectName}-userpool"
       AutoVerifiedAttributes:
         - email
-      UsernameAttributes:
-        - email
       Schema:
         - Name: email
           AttributeDataType: String
