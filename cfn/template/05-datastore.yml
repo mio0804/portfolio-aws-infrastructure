@@ -60,6 +60,19 @@ Resources:
         IgnorePublicAcls: true
         BlockPublicPolicy: true
         RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - "https://animalog-nabinemu.com"
+            AllowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - HEAD
+            AllowedHeaders:
+              - "*"
+            MaxAge: 3600  # CORSの許可結果をキャッシュしておく秒数
       Tags:
         - Key: Name
           Value: !Sub "${ProjectName}-bucket"
