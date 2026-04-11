@@ -20,6 +20,8 @@ Resources:
       UserPoolName: !Sub "${ProjectName}-userpool"
       AutoVerifiedAttributes:
         - email
+      UsernameAttributes:
+        - email
       Schema:
         - Name: email
           AttributeDataType: String
@@ -54,6 +56,7 @@ Resources:
     Properties:
       Domain: !Sub "${ProjectName}-auth-animalog-nabinemu"
       UserPoolId: !Ref UserPool
+      ManagedLoginVersion: 2 # HostedUIのマネージドログインを使用
 
 ################################################################################
 # Outputs

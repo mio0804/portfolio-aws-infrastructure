@@ -162,7 +162,9 @@ Resources:
             - Name: COGNITO_APP_CLIENT_ID
               Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-client-id"}
             - Name: COGNITO_DOMAIN
-              Value: {Fn::ImportValue: !Sub "${ProjectName}-userpool-domain-name"}
+              Value: !Sub
+                - "${DomainName}.auth.ap-northeast-1.amazoncognito.com"
+                - DomainName: {Fn::ImportValue: !Sub "${ProjectName}-userpool-domain-name"}
             - Name: COGNITO_REDIRECT_URI
               Value: "https://animalog-nabinemu.com/callback"
             - Name: COGNITO_LOGOUT_URI
