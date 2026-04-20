@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFront and Route 53.
+## ImportValue は、同じリージョン内でしか値を渡せないため、ACMに合わせて us-east-1 をDeploy時にリージョン指定する。
+## us-east-1 してもグローバルなリソースなため配信パフォーマンスに影響なし。
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
+################################################################################
+# Resources
+################################################################################
+Resources:
+  # ----------------------------------------------------------
+  # CloudFront
+  # ----------------------------------------------------------
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        # 独自ドメインの設定
+        Aliases: 
+          - animalog-nabinemu.com
+        # 独自ドメイン用のSSL証明書設定
+        ViewerCertificate:
+          AcmCertificateArn: {Fn::ImportValue: !Sub "${ProjectName}-certificate-arn"}
+          SslSupportMethod: sni-only # 推奨。ほとんどのブラウザとクライアントはSNIをサポートしている
+          MinimumProtocolVersion: TLSv1.2_2021 # セキュリティ基準に合わせた推奨バージョン # 最新バージョンはセキュリティ高いがサポートしている暗号が減るためユーザのアクセシビリティが悪くなる
+        Enabled: true # 作成後すぐに使い始める場合はtrue
+        Comment: !Sub "Distribution for ${ProjectName}"
+        HttpVersion: http2 # 高速なHTTP/2を有効化　# HTTP/1.1 は遅く、HTTP/3 はUDPになる
+        # オリジン設定（ECSのIPを指定する場所）
+        Origins:
+          - Id: EcsOrigin # このIdを後のDefaultCacheBehaviorで参照する
+            DomainName: origin.animalog-nabinemu.com # ひとまず仮の値（Lambdaによる更新想定）
+            CustomOriginConfig:
+              HTTPPort: 8080
+              OriginProtocolPolicy: http-only # CloudFrontは常にHTTPを使用してOriginに接続する
+        # キャッシュ・ルーティング設定
+        DefaultCacheBehavior:
+          TargetOriginId: EcsOrigin # 上記OriginsのIdと一致させる
+          ViewerProtocolPolicy: redirect-to-https # HTTPアクセスをHTTPSに自動リダイレクト
+          # AWSマネージドなキャッシュポリシーを利用（自作の手間を省く）
+          # CachingDisabled (動的アプリなため一旦キャッシュなし)
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad       
+          # ヘッダーやクエリ文字列をECSに渡すためのポリシー
+          # AllViewerExceptHostHeader (Hostヘッダー以外を全て転送)
+          OriginRequestPolicyId: b689b0a8-53d0-40b0-b404-139c1a5b103f
+        # 価格クラス（日本での高速表示を確保しつつ、コスト節約）
+        PriceClass: PriceClass_200
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-cloudfront-dist"
+
+  # ----------------------------------------------------------
+  # Route53
+  # ----------------------------------------------------------
+  DnsARecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: Z0428759EQPN90AYY8WX # ひとまず直書き、{Fn::ImportValue: !Sub "${ProjectName}-hostedzone-id"}に書き換える想定
+      Name: "animalog-nabinemu.com."
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+
+################################################################################
+# Outputs
+################################################################################
+Outputs:
+  DistributionId:   
+    Description: "CloudFrontDistributionID"
+    Value: !GetAtt CloudFrontDistribution.Id
+    Export:
+      Name: !Sub "${ProjectName}-cloudfront-dist-id"

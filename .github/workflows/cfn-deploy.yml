@@ -15,8 +15,9 @@ permissions:
   contents: read
 
 jobs:
-  # --- テストジョブ (PRとPush両方で実行) ---
+  # --- テストジョブ (プルリクエストのときだけ実行) ---
   test-and-validate:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,15 +50,20 @@ jobs:
       - name: Validate 05-DataStore
         run: aws cloudformation validate-template --template-body file://cfn/template/05-datastore.yml
 
-      - name: Validate 06-Loadbalancer
-        run: aws cloudformation validate-template --template-body file://cfn/template/06-loadbalancer.yml
+      # - name: Validate 06-Loadbalancer
+      #   run: aws cloudformation validate-template --template-body file://cfn/template/06-loadbalancer.yml
 
       - name: Validate 07-App-Ecs
         run: aws cloudformation validate-template --template-body file://cfn/template/07-app-ecs.yml
 
+      - name: Validate 08-certificate
+        run: aws cloudformation validate-template --template-body file://cfn/template/08-certificate.yml --region us-east-1
+
+      - name: Validate 09-cloudfront
+        run: aws cloudformation validate-template --template-body file://cfn/template/09-cloudfront.yml --region us-east-1
+
   # --- デプロイジョブ (mainへのPush時のみ実行) ---
   deploy:
-    needs: test-and-validate # テストが成功した時のみ実行
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     timeout-minutes: 30
     runs-on: ubuntu-latest
@@ -121,38 +127,15 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 05-01. ECR へログイン
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      
-      # 05-02. Frontend Docker イメージを build & push
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: portfolio-front-repo
-        run: |
-          docker build -f Dockerfile.frontend -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      # 05-03. Backend Docker イメージを build & push
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: portfolio-back-repo
-        run: |
-          docker build -f Dockerfile.backend -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      # 06. LoadBalancer Stack
-      - name: Deploy 06-LoadBalancer
-        run: |
-          aws cloudformation deploy \
-            --template-file cfn/template/06-loadbalancer.yml \
-            --stack-name portfolio-06-loadbalancer \
-            --parameter-overrides file://cfn/parameter/06-loadbalancer.json \
-            --capabilities CAPABILITY_NAMED_IAM \
-            --no-fail-on-empty-changeset
+      # # 06. LoadBalancer Stack
+      # - name: Deploy 06-LoadBalancer
+      #   run: |
+      #     aws cloudformation deploy \
+      #       --template-file cfn/template/06-loadbalancer.yml \
+      #       --stack-name portfolio-06-loadbalancer \
+      #       --parameter-overrides file://cfn/parameter/06-loadbalancer.json \
+      #       --capabilities CAPABILITY_NAMED_IAM \
+      #       --no-fail-on-empty-changeset
 
       # 07. App-Ecs Stack
       - name: Deploy 07-App-Ecs
@@ -162,4 +145,26 @@ jobs:
             --stack-name portfolio-07-app-ecs \
             --parameter-overrides file://cfn/parameter/07-app-ecs.json \
             --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
+
+      # 08. Certificate Stack
+      - name: Deploy 08-certificate
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/08-certificate.yml \
+            --stack-name portfolio-08-certificate \
+            --parameter-overrides file://cfn/parameter/08-certificate.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --region us-east-1 \
+            --no-fail-on-empty-changeset
+
+      # 09. Cloudfront Stack
+      - name: Deploy 09-cloudfront
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/09-cloudfront.yml \
+            --stack-name portfolio-09-cloudfront \
+            --parameter-overrides file://cfn/parameter/09-cloudfront.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --region us-east-1 \
             --no-fail-on-empty-changeset

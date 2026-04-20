@@ -210,10 +210,10 @@ Resources:
           SecurityGroups:
             - {Fn::ImportValue: !Sub "${ProjectName}-ecs-front-sg-id"}
           AssignPublicIp: ENABLED
-      LoadBalancers:
-        - TargetGroupArn: {Fn::ImportValue: !Sub "${ProjectName}-tg-arn"}
-          ContainerName: frontend
-          ContainerPort: 8080
+      # LoadBalancers:
+      #   - TargetGroupArn: {Fn::ImportValue: !Sub "${ProjectName}-tg-arn"}
+      #     ContainerName: frontend
+      #     ContainerPort: 8080
       ServiceConnectConfiguration:
         Enabled: true
         Namespace: !Sub "${ProjectName}-namespace"
@@ -238,7 +238,7 @@ Resources:
             - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1c-id"}
           SecurityGroups:
             - {Fn::ImportValue: !Sub "${ProjectName}-ecs-back-sg-id"}
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
       ServiceConnectConfiguration:
         Enabled: true
         Namespace: !Sub "${ProjectName}-namespace"

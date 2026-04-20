@@ -1,0 +1,41 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: ACM Certificate for CloudFront.
+## これはスタックわけないといけない。CloudFrontの仕様でリージョンが、us-east-1でないとならないため、Deploy時にリージョン指定する。
+
+################################################################################
+# Parameters
+################################################################################
+Parameters: 
+  ProjectName:
+    Type: String
+    Description: "Project Name"
+    AllowedPattern: '^[a-zA-Z0-9]*$'
+
+################################################################################
+# Resources
+################################################################################
+Resources: 
+  # ----------------------------------------------------------
+  # Certificate Manager
+  # ----------------------------------------------------------
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties: 
+      DomainName: animalog-nabinemu.com
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: animalog-nabinemu.com
+          HostedZoneId: Z0428759EQPN90AYY8WX # ひとまず直書き、{Fn::ImportValue: !Sub "${ProjectName}-hostedzone-id"}に書き換える想定
+      Tags:
+        - Key: Name
+          Value: !Sub "${ProjectName}-animalog-certificate"
+
+################################################################################
+# Outputs
+################################################################################
+Outputs:
+  CertificateArn:   
+    Description: "Certificate ARN"
+    Value: !Ref Certificate
+    Export:
+      Name: !Sub "${ProjectName}-certificate-arn"
