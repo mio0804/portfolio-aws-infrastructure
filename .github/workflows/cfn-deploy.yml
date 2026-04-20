@@ -121,29 +121,6 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # 05-01. ECR へログイン
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-      
-      # 05-02. Frontend Docker イメージを build & push
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: portfolio-front-repo
-        run: |
-          docker build -f Dockerfile.frontend -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
-      # 05-03. Backend Docker イメージを build & push
-      - name: Build, tag, and push image to Amazon ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: portfolio-back-repo
-        run: |
-          docker build -f Dockerfile.backend -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-
       # 06. LoadBalancer Stack
       - name: Deploy 06-LoadBalancer
         run: |
