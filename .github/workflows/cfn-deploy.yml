@@ -50,8 +50,8 @@ jobs:
       - name: Validate 05-DataStore
         run: aws cloudformation validate-template --template-body file://cfn/template/05-datastore.yml
 
-      # - name: Validate 06-Loadbalancer
-      #   run: aws cloudformation validate-template --template-body file://cfn/template/06-loadbalancer.yml
+      - name: Validate 06-Loadbalancer
+        run: aws cloudformation validate-template --template-body file://cfn/template/06-loadbalancer.yml
 
       - name: Validate 07-App-Ecs
         run: aws cloudformation validate-template --template-body file://cfn/template/07-app-ecs.yml
@@ -127,15 +127,15 @@ jobs:
             --capabilities CAPABILITY_NAMED_IAM \
             --no-fail-on-empty-changeset
 
-      # # 06. LoadBalancer Stack
-      # - name: Deploy 06-LoadBalancer
-      #   run: |
-      #     aws cloudformation deploy \
-      #       --template-file cfn/template/06-loadbalancer.yml \
-      #       --stack-name portfolio-06-loadbalancer \
-      #       --parameter-overrides file://cfn/parameter/06-loadbalancer.json \
-      #       --capabilities CAPABILITY_NAMED_IAM \
-      #       --no-fail-on-empty-changeset
+      # 06. LoadBalancer Stack
+      - name: Deploy 06-LoadBalancer
+        run: |
+          aws cloudformation deploy \
+            --template-file cfn/template/06-loadbalancer.yml \
+            --stack-name portfolio-06-loadbalancer \
+            --parameter-overrides file://cfn/parameter/06-loadbalancer.json \
+            --capabilities CAPABILITY_NAMED_IAM \
+            --no-fail-on-empty-changeset
 
       # 07. App-Ecs Stack
       - name: Deploy 07-App-Ecs
