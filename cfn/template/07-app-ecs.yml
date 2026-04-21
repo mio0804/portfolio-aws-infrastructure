@@ -238,7 +238,7 @@ Resources:
             - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1c-id"}
           SecurityGroups:
             - {Fn::ImportValue: !Sub "${ProjectName}-ecs-back-sg-id"}
-          AssignPublicIp: DISABLED
+          AssignPublicIp: ENABLED
       ServiceConnectConfiguration:
         Enabled: true
         Namespace: !Sub "${ProjectName}-namespace"
