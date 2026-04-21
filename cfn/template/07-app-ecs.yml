@@ -193,34 +193,34 @@ Resources:
         - Key: Name
           Value: !Sub "${ProjectName}-backend-task"
 
-  FrontService:
-    Type: AWS::ECS::Service
-    DependsOn: CloudMapNamespace
-    Properties:
-      ServiceName: !Sub "${ProjectName}-frontend-service"
-      Cluster: !Ref Cluster
-      TaskDefinition: !Ref FrontTaskDefinition
-      DesiredCount: 1
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          Subnets:
-            - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1a-id"}
-            - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1c-id"}
-          SecurityGroups:
-            - {Fn::ImportValue: !Sub "${ProjectName}-ecs-front-sg-id"}
-          AssignPublicIp: ENABLED
-      # LoadBalancers:
-      #   - TargetGroupArn: {Fn::ImportValue: !Sub "${ProjectName}-tg-arn"}
-      #     ContainerName: frontend
-      #     ContainerPort: 8080
-      ServiceConnectConfiguration:
-        Enabled: true
-        Namespace: !Sub "${ProjectName}-namespace"
-      EnableExecuteCommand: true
-      Tags:
-        - Key: Name
-          Value: !Sub "${ProjectName}-frontend-service"
+  # FrontService:
+  #   Type: AWS::ECS::Service
+  #   DependsOn: CloudMapNamespace
+  #   Properties:
+  #     ServiceName: !Sub "${ProjectName}-frontend-service"
+  #     Cluster: !Ref Cluster
+  #     TaskDefinition: !Ref FrontTaskDefinition
+  #     DesiredCount: 1
+  #     LaunchType: FARGATE
+  #     NetworkConfiguration:
+  #       AwsvpcConfiguration:
+  #         Subnets:
+  #           - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1a-id"}
+  #           - {Fn::ImportValue: !Sub "${ProjectName}-pub-subnet-1c-id"}
+  #         SecurityGroups:
+  #           - {Fn::ImportValue: !Sub "${ProjectName}-ecs-front-sg-id"}
+  #         AssignPublicIp: ENABLED
+  #     # LoadBalancers:
+  #     #   - TargetGroupArn: {Fn::ImportValue: !Sub "${ProjectName}-tg-arn"}
+  #     #     ContainerName: frontend
+  #     #     ContainerPort: 8080
+  #     ServiceConnectConfiguration:
+  #       Enabled: true
+  #       Namespace: !Sub "${ProjectName}-namespace"
+  #     EnableExecuteCommand: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: !Sub "${ProjectName}-frontend-service"
 
   BackService:
     Type: AWS::ECS::Service
