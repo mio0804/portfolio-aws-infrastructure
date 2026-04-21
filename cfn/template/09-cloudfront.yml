@@ -50,7 +50,7 @@ Resources:
           CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad       
           # ヘッダーやクエリ文字列をECSに渡すためのポリシー
           # AllViewerExceptHostHeader (Hostヘッダー以外を全て転送)
-          OriginRequestPolicyId: b689b0a8-53d0-40b0-b404-139c1a5b103f
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
         # 価格クラス（日本での高速表示を確保しつつ、コスト節約）
         PriceClass: PriceClass_200
       Tags:
