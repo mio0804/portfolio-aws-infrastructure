@@ -267,19 +267,19 @@ Resources:
       ServiceNamespace: ecs
       ScheduledActions:
         - ScheduledActionName: !Sub "${ProjectName}-frontend-test-scheduled-action"
-          TimeZone: Asia/Tokyo
-          Schedule: "cron(0 23 ? * SUN *)"  # 日曜の23:00 JST テスト実施
+          Timezone: Asia/Tokyo
+          Schedule: "cron(30 23 ? * SUN *)"  # 日曜の23:30 JST テスト実施
           ScalableTargetAction:
             MaxCapacity: 1
             MinCapacity: 1
         # - ScheduledActionName: !Sub "${ProjectName}-frontend-stop-at-night"
-        #   TimeZone: Asia/Tokyo
+        #   Timezone: Asia/Tokyo
         #   Schedule: "cron(0 20 ? * MON-FRI *)"  # 平日（月-金）の20:00 JST
         #   ScalableTargetAction:
         #     MaxCapacity: 0
         #     MinCapacity: 0
         # - ScheduledActionName: !Sub "${ProjectName}-frontend-start-in-morning"
-        #   TimeZone: Asia/Tokyo
+        #   Timezone: Asia/Tokyo
         #   Schedule: "cron(0 7 ? * MON-FRI *)"  # 平日（月-金）の7:00 JST
         #   ScalableTargetAction:
         #     MaxCapacity: 1
@@ -296,13 +296,13 @@ Resources:
   #     ServiceNamespace: ecs
   #     ScheduledActions:
   #       - ScheduledActionName: !Sub "${ProjectName}-backend-stop-at-night"
-  #         TimeZone: Asia/Tokyo
+  #         Timezone: Asia/Tokyo
   #         Schedule: "cron(0 20 ? * MON-FRI *)"  # 平日（月-金）の20:00 JST
   #         ScalableTargetAction:
   #           MaxCapacity: 0
   #           MinCapacity: 0
   #       - ScheduledActionName: !Sub "${ProjectName}-backend-start-in-morning"
-  #         TimeZone: Asia/Tokyo
+  #         Timezone: Asia/Tokyo
   #         Schedule: "cron(0 7 ? * MON-FRI *)"  # 平日（月-金）の7:00 JST
   #         ScalableTargetAction:
   #           MaxCapacity: 1
