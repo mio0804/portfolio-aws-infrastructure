@@ -251,3 +251,59 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${ProjectName}-backend-service"
+
+  # ----------------------------------------------------------
+  # ECS AutoScaling
+  # ----------------------------------------------------------
+  # 正常に動作するか
+  FrontEcsScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 1
+      MinCapacity: 0
+      ResourceId: !Sub "service/${Cluster}/${FrontService}"  # クラスター名/サービス名
+      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"  # サービスリンクロール
+      ScalableDimension: ecs:service:DesiredCount  # ECSサービスのタスク数
+      ServiceNamespace: ecs
+      ScheduledActions:
+        - ScheduledActionName: !Sub "${ProjectName}-frontend-test-scheduled-action"
+          Timezone: Asia/Tokyo
+          Schedule: "cron(30 23 ? * SUN *)"  # 日曜の23:30 JST テスト実施
+          ScalableTargetAction:
+            MaxCapacity: 1
+            MinCapacity: 1
+        # - ScheduledActionName: !Sub "${ProjectName}-frontend-stop-at-night"
+        #   Timezone: Asia/Tokyo
+        #   Schedule: "cron(0 20 ? * MON-FRI *)"  # 平日（月-金）の20:00 JST
+        #   ScalableTargetAction:
+        #     MaxCapacity: 0
+        #     MinCapacity: 0
+        # - ScheduledActionName: !Sub "${ProjectName}-frontend-start-in-morning"
+        #   Timezone: Asia/Tokyo
+        #   Schedule: "cron(0 7 ? * MON-FRI *)"  # 平日（月-金）の7:00 JST
+        #   ScalableTargetAction:
+        #     MaxCapacity: 1
+        #     MinCapacity: 1
+
+  # BackEcsScalableTarget:
+  #   Type: AWS::ApplicationAutoScaling::ScalableTarget
+  #   Properties:
+  #     MaxCapacity: 1
+  #     MinCapacity: 0
+  #     ResourceId: !Sub "service/${Cluster}/${FrontService}"  # クラスター名/サービス名
+  #     RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"  # サービスリンクロール
+  #     ScalableDimension: ecs:service:DesiredCount  # ECSサービスのタスク数
+  #     ServiceNamespace: ecs
+  #     ScheduledActions:
+  #       - ScheduledActionName: !Sub "${ProjectName}-backend-stop-at-night"
+  #         Timezone: Asia/Tokyo
+  #         Schedule: "cron(0 20 ? * MON-FRI *)"  # 平日（月-金）の20:00 JST
+  #         ScalableTargetAction:
+  #           MaxCapacity: 0
+  #           MinCapacity: 0
+  #       - ScheduledActionName: !Sub "${ProjectName}-backend-start-in-morning"
+  #         Timezone: Asia/Tokyo
+  #         Schedule: "cron(0 7 ? * MON-FRI *)"  # 平日（月-金）の7:00 JST
+  #         ScalableTargetAction:
+  #           MaxCapacity: 1
+  #           MinCapacity: 1
