@@ -256,22 +256,22 @@ Resources:
   # ECS AutoScaling
   # ----------------------------------------------------------
   # 正常に動作するか
-  FrontEcsScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MaxCapacity: 1
-      MinCapacity: 0
-      ResourceId: !Sub "service/${ProjectName}-cluster/${ProjectName}-frontend-service"  # クラスター名/サービス名
-      RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"  # サービスリンクロール
-      ScalableDimension: ecs:service:DesiredCount  # ECSサービスのタスク数
-      ServiceNamespace: ecs
-      ScheduledActions:
-        - ScheduledActionName: !Sub "${ProjectName}-frontend-test-scheduled-action"
-          Timezone: Asia/Tokyo
-          Schedule: "cron(50 23 ? * SUN *)"  # 日曜の23:50 JST テスト実施
-          ScalableTargetAction:
-            MaxCapacity: 1
-            MinCapacity: 1
+  # FrontEcsScalableTarget:
+  #   Type: AWS::ApplicationAutoScaling::ScalableTarget
+  #   Properties:
+  #     MaxCapacity: 1
+  #     MinCapacity: 0
+  #     ResourceId: !Sub "service/${ProjectName}-cluster/${ProjectName}-frontend-service"  # クラスター名/サービス名
+  #     RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"  # サービスリンクロール
+  #     ScalableDimension: ecs:service:DesiredCount  # ECSサービスのタスク数
+  #     ServiceNamespace: ecs
+  #     ScheduledActions:
+  #       - ScheduledActionName: !Sub "${ProjectName}-frontend-test-scheduled-action"
+  #         Timezone: Asia/Tokyo
+  #         Schedule: "cron(50 23 ? * SUN *)"  # 日曜の23:50 JST テスト実施
+  #         ScalableTargetAction:
+  #           MaxCapacity: 1
+  #           MinCapacity: 1
         # - ScheduledActionName: !Sub "${ProjectName}-frontend-stop-at-night"
         #   Timezone: Asia/Tokyo
         #   Schedule: "cron(0 20 ? * MON-FRI *)"  # 平日（月-金）の20:00 JST
@@ -290,7 +290,7 @@ Resources:
   #   Properties:
   #     MaxCapacity: 1
   #     MinCapacity: 0
-  #     ResourceId: !Sub "service/${Cluster}/${FrontService}"  # クラスター名/サービス名
+  #     ResourceId: !Sub "service/${ProjectName}-cluster/${ProjectName}-backend-service"  # クラスター名/サービス名
   #     RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"  # サービスリンクロール
   #     ScalableDimension: ecs:service:DesiredCount  # ECSサービスのタスク数
   #     ServiceNamespace: ecs
