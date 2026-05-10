@@ -261,7 +261,7 @@ Resources:
     Properties:
       MaxCapacity: 1
       MinCapacity: 0
-      ResourceId: !Sub "service/${ProjectName}-cluster/${ProjectName}-frontend-task"  # クラスター名/サービス名
+      ResourceId: !Sub "service/${ProjectName}-cluster/${ProjectName}-frontend-service"  # クラスター名/サービス名
       RoleARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/aws-service-role/ecs.application-autoscaling.amazonaws.com/AWSServiceRoleForApplicationAutoScaling_ECSService"  # サービスリンクロール
       ScalableDimension: ecs:service:DesiredCount  # ECSサービスのタスク数
       ServiceNamespace: ecs
